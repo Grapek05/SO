@@ -1,0 +1,9 @@
+cd /Pulpit/SO
+python3 zad2.py (nazwa_pliku)
+ls ( sprawdzenie czy zostalo utworzone )
+cat (nazwa_pliku)
+rm (nazwa_pliku)
+ls ( sprawdzenie czy zostalo usuniete )
+ps aux | grep (nazwa_pliku)        - 
+ls -la /proc/{PID}/fd - w tym plik (deleted) z dana liczba
+cp /proc/{PID}/fd/{Liczba z deleted} {nazwa pliku txt w ktorym zapiszemy to co nam utworzylo poprzednio

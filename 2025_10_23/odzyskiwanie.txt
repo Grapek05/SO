@@ -1,0 +1,9 @@
+Po usunięciu pliku w drugim terminalu proces nadal posiada otwarty deskryptor pliku.
+Dane nadal istnieją w pamięci i można je odzyskać bezinwazyjnie, dopóki proces działa.
+
+Aby odzyskać zawartość:
+1. Sprawdzić PID procesu poleceniem: ps aux | grep <nazwa_pliku>
+2. Odczytać deskryptor z katalogu /proc/<PID>/fd/
+3. Skopiować zawartość do nowego pliku:
+   cp /proc/<PID>/fd/<nr_fd> odzyskane.txt
+
