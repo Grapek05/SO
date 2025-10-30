@@ -1,0 +1,26 @@
+1. cd && mkdir lab
+2. ls -la
+3. chmod g+rx,o-rwx lab
+4. ls -la /boot >> lab/boot.txt
+5. mkdir -p lab/dir1/dir2/dir3
+cd lab
+6. cat ../../boot.txt
+7. touch tekst1.txt tekst2.txt tekst3.txt
+8. cp tekst?.txt dir1/dir2/dir3/
+9. touch .ukryty
+10. cd dir1/dir2/dir3
+10A. mv tekst1.txt tekst1_2.txt
+11. cd
+11A. cat /proc/meminfo >> tekst1.txt
+12. cat /proc/cpuinfo >> tekst1.txt
+13. who >> tekst2.txt
+14. find / "share" -type d
+15. find /usr/bin -size +5M
+16. find /usr/bin -type f -size +300c -size -500c -exec cp {} lab \;
+cd lab
+17. ln tekst1.txt TEKST2.TXT
+18. ln -s tekst2.txt Tekst2.txt
+19. ls -la
+20. ls la /dev/ | grep tty
+21. man ls
+ls -R ./
