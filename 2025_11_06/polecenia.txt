@@ -1,0 +1,18 @@
+1. head -n 1 iris.csv
+2. sed 1d iris.csv / tail -n +2 iris.csv
+3. cat iris.csv | sed -e 's/Setosa/1/g' -e 's/Versicolor/2/g' -e 's/Virginica/3/g'
+4. awk -F, 'NR>1 { gsub(/"/,"",$5); print $5 }' iris.csv | sort | uniq
+awk -F, 'NR>1 {
+    # usuń cudzysłowy i ewentualne śmieci z końca (np. /TEKST2)
+    gsub(/"/,"",$5)
+    gsub(/\/.*/,"",$5)
+    print $5
+}' iris.csv | sort | uniq
+5. awk -F, 'NR>1 { sum=$1+$2+$3+$4; print sum }' iris.csv
+6. LC_NUMERIC=C awk -F, 'NR>1 { sum+=$2; count++ } END { print "Średnia sepal.width =", sum/count }' iris.csv
+7. LC_NUMERIC=C awk -F, 'NR==2 {max=$4; line=$0} NR>2 && $4>max {max=$4; line=$0} END {print line}' iris.csv
+8. awk -F, 'NR>1 && $1>7 { gsub(/"/,"",$5); print $5 }' iris.csv | sort | uniq
+9. awk -F, 'NR>1 { printf "%d\t%d\t%d\t%d\t%s\n", $1, $2, $3, $4, $5 }' iris.csv
+10. head -n 1 iris.csv > iris_shuffled.csv
+tail -n +2 iris.csv | shuf >> iris_shuffled.csv
+
