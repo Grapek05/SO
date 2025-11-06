@@ -1,0 +1,17 @@
+valid@domain.com
+Valid@domain.com
+V@domain.com
+V@domain.com
+INVALID@domain.c
+INVALID@d5.com
+INVALID@dcom.
+INVALID@dcom
+@dcom.
+invalid@
+@@@@@@@
+.
+a@a@.com
+01010@valid.pl
+01010@in0valid.pl
+01010@in-valid.pl
+qwerty.qwertyu@invalid.pl
