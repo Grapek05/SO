@@ -1,0 +1,29 @@
+1.
+echo "Nowa zawartość pliku" > folder.txt
+echo "Tekst do dopisania" >> folder.txt
+
+2.
+Alt + 3
+
+3.
+Dodanie wcięcia:
+Alt + }
+
+Usunięcie wcięcia:
+Alt + {
+
+4.
+Nazwa pliku:
+~/.nanorc
+
+Polecenie:
+set tabstospaces
+
+5.
+Nazwa pliku:
+~/.vimrc
+
+Polecenia:
+set expandtab
+set tabstop=4
+set shiftwidth=4
