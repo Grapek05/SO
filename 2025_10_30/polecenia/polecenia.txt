@@ -1,11 +1,8 @@
-wget https://github.com/git/git/archive/refs/heads/master.zip
-unzip master.zip
-
 1. ps axo command | grep " "
 2. mount | grep -E ' (/dev/|/sys/)'
 3. journalctl -b | grep -iE '(pci|usb)'
 4. cat numery.txt | grep -E '^[0-9]{9}[13579][0-9]$'
-5. cat numery.txt | grep -E '^(99)[0-9]{7}[02468][0-9]$'
+5. cat numery.txt | grep -E '^99[0-9]{7}[02468][0-9]$'
 6. cat adresy.txt | grep -E '^[a-zA-Z0-9]{1,16}@[a-z]+\.[a-z]{2,}$'
 7. cat hasla.txt | grep -E '.{8,}' | grep '[a-z]' | grep '[A-Z]' | grep [0-9] | grep '[!@#%^&*()]'
 8. grep -rHn 'strlen' git-master
