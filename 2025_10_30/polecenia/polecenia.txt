@@ -2,7 +2,7 @@ wget https://github.com/git/git/archive/refs/heads/master.zip
 unzip master.zip
 
 1. ps axo command | grep " "
-2. mount | grep -E '(/dev/|/sys/)'
+2. mount | grep -E ' (/dev/|/sys/)'
 3. journalctl -b | grep -iE '(pci|usb)'
 4. cat numery.txt | grep -E '^[0-9]{9}[13579][0-9]$'
 5. cat numery.txt | grep -E '^(99)[0-9]{7}[02468][0-9]$'
