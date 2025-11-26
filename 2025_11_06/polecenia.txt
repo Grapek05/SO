@@ -1,0 +1,32 @@
+1.
+head iris.csv -n 1
+cat iris.csv  | head -n 1
+
+2.
+sed 1d iris.csv
+
+3.
+cat iris.csv | sed -e 's/Setosa/1/g' -e 's/Versicolor/2/g' -e 's/Virginica/3/g'
+
+4.
+sed 1d iris.csv | awk -F, '{print $5}' | tr -d '"' | sort | uniq
+
+5.
+sed 1d iris.csv | awk -F, '{print $1+$2+$3+$4+$5}' 
+sed 1d iris.csv | awk -F, '{print $1+$2+$3+$4+$5}' | paste -sd+ | bc
+
+6.
+sed 1d iris.csv | awk -F, '{sum+=$2; count++} END {print sum/count}'
+
+7.
+sed 1d iris.csv | awk -F, '{if($4>max){max=$4; line=$0}} END{print line}'
+
+8.
+sed 1d iris.csv | awk -F, '$1 > 7 {print $5; exit}'
+sed 1d iris.csv | awk -F, '$1 > 7 {print $5}' | head -n 1
+
+9.
+sed 1d iris.csv | awk -F, '{gsub(/"/,"",$5); printf "%d\t%d\t%d\t%d\t\"%s\"\n", $1, $2, $3, $4, $5}'
+
+10.
+(head -n 1 iris.csv && sed 1d iris.csv | shuf) > iris_random.csv
