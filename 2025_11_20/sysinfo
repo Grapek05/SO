@@ -1,0 +1,101 @@
+#!/bin/bash
+
+cpu() {
+    echo "CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')"
+}
+
+ram() {
+    used=$(free -m | awk '/Mem/ {print $3}')
+    total=$(free -m | awk '/Mem/ {print $2}')
+    percent=$(( used * 100 / total ))
+    echo "RAM: $used / $total MiB (${percent}% used)"
+}
+
+loadavg() {
+    echo "Load: $(cat /proc/loadavg | awk '{print $1", "$2", "$3}')"
+}
+
+uptime_f() {
+    uptime -p | sed 's/up //; s/,//g' | awk '{print "Uptime: "$0}'
+}
+
+kernel() {
+    echo "Kernel: $(uname -r)"
+}
+
+gpu() {
+    echo "GPU: $(lspci | grep -i 'vga\|3d\|display' | cut -d: -f3- | sed 's/^ //')"
+}
+
+user_f() {
+    echo "User: $USER"
+}
+
+shell_f() {
+    echo "Shell: $(basename "$SHELL")"
+}
+
+processes() {
+    echo "Processes: $(ps -e --no-headers | wc -l)"
+}
+
+threads() {
+    echo "Threads: $(ps -eLf --no-headers | wc -l)"
+}
+
+ipinfo() {
+    echo -n "IP: "
+    ip -o -4 addr show | awk '{print $4}' | paste -sd " " -
+}
+
+dns() {
+    echo -n "DNS: "
+    grep -m1 "nameserver" /etc/resolv.conf | awk '{print $2}'
+}
+
+internet() {
+    if timeout 1 ping -c1 8.8.8.8 &>/dev/null; then
+        echo "Internet: OK"
+    else
+        echo "Internet: FAIL"
+    fi
+}
+
+declare -A map=(
+    ["CPU"]=cpu
+    ["RAM"]=ram
+    ["LOAD"]=loadavg
+    ["UPTIME"]=uptime_f
+    ["KERNEL"]=kernel
+    ["GPU"]=gpu
+    ["USER"]=user_f
+    ["SHELL"]=shell_f
+    ["PROCESSES"]=processes
+    ["THREADS"]=threads
+    ["IP"]=ipinfo
+    ["DNS"]=dns
+    ["INTERNET"]=internet
+)
+
+if [[ $# -eq 0 ]]; then
+    # print all
+    for key in "${!map[@]}"; do
+        ${map[$key]}
+    done
+    exit 0
+fi
+
+# arguments mode
+err=0
+for arg in "$@"; do
+    key=$(echo "$arg" | tr '[:lower:]' '[:upper:]')
+    if [[ -n "${map[$key]}" ]]; then
+        ${map[$key]}
+    else
+        echo "Invalid argument: $arg"
+        err=1
+    fi
+done
+
+exit $err
+
