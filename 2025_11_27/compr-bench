@@ -1,0 +1,77 @@
+#!/bin/bash
+
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+MAGENTA="\e[35m"
+RESET="\e[0m"
+
+if [ $# -lt 1 ]; then
+    echo -e "${RED}Użycie: $0 <katalog1> [katalog2 ...]${RESET}"
+    exit 1
+fi
+
+programs=("gzip -k" "bzip2 -k" "xz -k" "zstd -k" "lz4 -k" "7z a")
+
+for dir in "$@"; do
+    echo -e "\n${YELLOW}==== Katalog: $dir ====${RESET}"
+
+    tmp_dir=$(mktemp -d)
+    archive="$tmp_dir/archive.tar"
+
+    tar cf "$archive" -C "$dir" .
+
+    echo -e "${YELLOW}program\tczas kompresji\tczas dekompresji\tratio${RESET}"
+
+    for prog in "${programs[@]}"; do
+        p_name=$(echo "$prog" | awk '{print $1}')
+
+        case "$p_name" in
+            gzip)  comp_file="$archive.gz" ;;
+            bzip2) comp_file="$archive.bz2" ;;
+            xz)    comp_file="$archive.xz" ;;
+            zstd)  comp_file="$archive.zst" ;;
+            lz4)   comp_file="$archive.lz4" ;;
+            7z)    comp_file="$archive.7z" ;;
+        esac
+
+        start=$(date +%s.%N)
+
+        if [ "$p_name" == "7z" ]; then
+            7z a "$comp_file" "$archive" >/dev/null 2>&1
+        else
+            $prog "$archive" >/dev/null 2>&1
+        fi
+        end=$(date +%s.%N)
+
+        comp_time=$(echo "$end - $start" | bc -l)
+
+        start=$(date +%s.%N)
+        case "$p_name" in
+            gzip) gunzip -k "$comp_file" >/dev/null 2>&1 ;;
+            bzip2) bunzip2 -k "$comp_file" >/dev/null 2>&1 ;;
+            xz) unxz -k "$comp_file" >/dev/null 2>&1 ;;
+            zstd) unzstd -k "$comp_file" >/dev/null 2>&1 ;;
+            lz4) unlz4 -k "$comp_file" >/dev/null 2>&1 ;;
+            7z) 7z x "$comp_file" -o"$tmp_dir" >/dev/null 2>&1 ;;
+        esac
+        end=$(date +%s.%N)
+
+        decomp_time=$(echo "$end - $start" | bc -l)
+
+        orig_size=$(stat -c%s "$archive")
+        comp_size=$(stat -c%s "$comp_file")
+        ratio=$(echo "scale=2; 100 * $comp_size / $orig_size" | bc -l)
+        ratio_fmt=$(printf "%.1f%%" "$ratio")
+
+        # Wynik
+        echo -e "${GREEN}${p_name}${RESET}\t${BLUE}${comp_time}${RESET}\t${BLUE}${decomp_time}${RESET}\t${MAGENTA}${ratio_fmt}${RESET}"
+
+        rm -f "$comp_file"
+        rm -f "$tmp_dir/archive" 2>/dev/null
+    done
+
+    rm -rf "$tmp_dir"
+done
+

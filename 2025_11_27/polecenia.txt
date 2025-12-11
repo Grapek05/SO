@@ -1,0 +1,3 @@
+chmod +x compr-bench
+
+./compr-bench /tmp/data/random /tmp/data/empty /tmp/data/various
