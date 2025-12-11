@@ -1,77 +1,104 @@
 #!/bin/bash
 
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-BLUE="\e[34m"
-MAGENTA="\e[35m"
-RESET="\e[0m"
+# Ustawienie locale na C, aby 'bc' otrzymywał kropki zamiast przecinków w liczbach zmiennoprzecinkowych
+LC_NUMERIC=C
 
-if [ $# -lt 1 ]; then
-    echo -e "${RED}Użycie: $0 <katalog1> [katalog2 ...]${RESET}"
+if [ "$#" -eq 0 ]; then
+    echo "Użycie: $0 <katalog1> [katalog...]"
+    echo "./compr-bench /tmp/data/random /tmp/data/empty /tmp/data/various"
     exit 1
 fi
 
-programs=("gzip -k" "bzip2 -k" "xz -k" "zstd -k" "lz4 -k" "7z a")
+tmp_dir=$(mktemp -d)
+
+cleanup() {
+    rm -rf "$tmp_dir"
+}
+trap cleanup EXIT
+
+benchmark_tool() {
+    local tool_name=$1
+    local compress_cmd=$2
+    local decompress_cmd=$3
+    local compressed_file=$4
+    local tar_file="$tmp_dir/archive.tar"
+
+    # kompresja
+    local start=$(date +%s.%N)
+    eval "$compress_cmd" > /dev/null 2>&1
+    local end=$(date +%s.%N)
+    local comp_time=$(echo "$end - $start" | bc -l)
+
+    # ratio
+    if [ -f "$compressed_file" ]; then
+        local orig_size=$(stat -c%s "$tar_file")
+        local comp_size=$(stat -c%s "$compressed_file")
+        # %: (comp / orig) * 100
+        local ratio=$(echo "scale=2; ($comp_size / $orig_size) * 100" | bc -l)
+    else
+        local ratio="Error"
+    fi
+
+    # dekompresja
+    start=$(date +%s.%N)
+    eval "$decompress_cmd" > /dev/null 2>&1
+    end=$(date +%s.%N)
+    local decomp_time=$(echo "$end - $start" | bc -l)
+
+    printf "%s\t%.9f\t%.10f\t%s%%\n" "$tool_name" "$comp_time" "$decomp_time" "$ratio"
+
+    rm -f "$compressed_file"
+    rm -f "$tar_file.out" 
+}
 
 for dir in "$@"; do
-    echo -e "\n${YELLOW}==== Katalog: $dir ====${RESET}"
+    echo "---------------------------------------------------"
+    echo "Katalog: $dir"
 
-    tmp_dir=$(mktemp -d)
-    archive="$tmp_dir/archive.tar"
+    tar cf "$tmp_dir/archive.tar" -C "$(dirname "$dir")" "$(basename "$dir")" 2> /dev/null
+    
+    # Nagłówek tabeli
+    printf "name\tcompress\tdecompress\tratio\n"
 
-    tar cf "$archive" -C "$dir" .
+    tf="$tmp_dir/archive.tar"
 
-    echo -e "${YELLOW}program\tczas kompresji\tczas dekompresji\tratio${RESET}"
+    # -k zachowuje plik wejściowy
+    # -f nadpisuje
+    benchmark_tool "gzip" \
+        "gzip -k -f '$tf'" \
+        "gzip -d -k -f '$tf.gz'" \
+        "$tf.gz"
 
-    for prog in "${programs[@]}"; do
-        p_name=$(echo "$prog" | awk '{print $1}')
+    benchmark_tool "bzip2" \
+        "bzip2 -k -f '$tf'" \
+        "bzip2 -d -k -f '$tf.bz2'" \
+        "$tf.bz2"
 
-        case "$p_name" in
-            gzip)  comp_file="$archive.gz" ;;
-            bzip2) comp_file="$archive.bz2" ;;
-            xz)    comp_file="$archive.xz" ;;
-            zstd)  comp_file="$archive.zst" ;;
-            lz4)   comp_file="$archive.lz4" ;;
-            7z)    comp_file="$archive.7z" ;;
-        esac
+    benchmark_tool "xz" \
+        "xz -k -f '$tf'" \
+        "xz -d -k -f '$tf.xz'" \
+        "$tf.xz"
 
-        start=$(date +%s.%N)
+    benchmark_tool "zstd" \
+        "zstd -k -f '$tf'" \
+        "zstd -d -k -f '$tf.zst'" \
+        "$tf.zst"
 
-        if [ "$p_name" == "7z" ]; then
-            7z a "$comp_file" "$archive" >/dev/null 2>&1
-        else
-            $prog "$archive" >/dev/null 2>&1
-        fi
-        end=$(date +%s.%N)
+    benchmark_tool "lz4" \
+        "lz4 -k -f '$tf' '$tf.lz4'" \
+        "lz4 -d -k -f '$tf.lz4'" \
+        "$tf.lz4"
 
-        comp_time=$(echo "$end - $start" | bc -l)
+    # 7z a = add
+    # 7z x = extract
+    # -y = "yes" dla wszystkich pytań
+    # -o = katalog wyjściowy
+    benchmark_tool "7z" \
+        "7z a '$tf.7z' '$tf'" \
+        "7z x '$tf.7z' -o'$tmp_dir/7z_out' -y" \
+        "$tf.7z"
+    rm -rf "$tmp_dir/7z_out"
 
-        start=$(date +%s.%N)
-        case "$p_name" in
-            gzip) gunzip -k "$comp_file" >/dev/null 2>&1 ;;
-            bzip2) bunzip2 -k "$comp_file" >/dev/null 2>&1 ;;
-            xz) unxz -k "$comp_file" >/dev/null 2>&1 ;;
-            zstd) unzstd -k "$comp_file" >/dev/null 2>&1 ;;
-            lz4) unlz4 -k "$comp_file" >/dev/null 2>&1 ;;
-            7z) 7z x "$comp_file" -o"$tmp_dir" >/dev/null 2>&1 ;;
-        esac
-        end=$(date +%s.%N)
-
-        decomp_time=$(echo "$end - $start" | bc -l)
-
-        orig_size=$(stat -c%s "$archive")
-        comp_size=$(stat -c%s "$comp_file")
-        ratio=$(echo "scale=2; 100 * $comp_size / $orig_size" | bc -l)
-        ratio_fmt=$(printf "%.1f%%" "$ratio")
-
-        # Wynik
-        echo -e "${GREEN}${p_name}${RESET}\t${BLUE}${comp_time}${RESET}\t${BLUE}${decomp_time}${RESET}\t${MAGENTA}${ratio_fmt}${RESET}"
-
-        rm -f "$comp_file"
-        rm -f "$tmp_dir/archive" 2>/dev/null
-    done
-
-    rm -rf "$tmp_dir"
+    rm -f "$tf"
+    echo ""
 done
-
