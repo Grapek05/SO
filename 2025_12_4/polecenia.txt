@@ -1,2 +1,0 @@
-Uruchomienie programu:
-- python3 rr.py plik.csv 2
