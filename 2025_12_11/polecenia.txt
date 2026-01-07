@@ -1,0 +1,3 @@
+Polecenia do uruchomienia:
+
+g++ -std=c++11 -pthread watki.cpp -o multithreaded_counter
