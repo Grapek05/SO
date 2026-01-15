@@ -1,0 +1,87 @@
+Plik watki.cpp wykorzystuje wątki, które współdzielą pamięć automatycznie, dlatego wystarcza std::mutex. 
+Natomiast program.cpp używa procesów tworzonych przez fork(), które mają oddzielne przestrzenie adresowe, więc konieczne jest użycie mmap do współdzielenia pamięci oraz pthread_mutex_t przystosowanego do pracy między procesami.
+
+
+1️⃣ PODSTAWOWA RÓŻNICA
+
+watki.cpp wykorzystuje wątki, które współdzielą pamięć w jednym procesie, natomiast program.cpp wykorzystuje osobne procesy, które mają oddzielne przestrzenie adresowe i muszą używać pamięci współdzielonej (mmap).
+
+2️⃣ PORÓWNANIE TABELARYCZNE
+
+Cecha	watki.cpp	                program.cpp
+Model	Wątki (std::thread)	        Procesy (fork)
+Pamięć	Wspólna automatycznie	    Oddzielna
+Współdzielenie danych	            Zwykłe zmienne	mmap
+Mutex	std::mutex	                pthread_mutex_t
+Synchronizacja	w obrębie procesu	między procesami
+Tworzenie	szybkie	                wolniejsze
+Izolacja	mała	                duża
+Awaria	zabija cały proces	        tylko proces potomny
+Sprzątanie	automatyczne	        ręczne (munmap)
+
+3️⃣ RÓŻNICE W KROKACH DZIAŁANIA
+
+🔹 watki.cpp – WĄTKI
+
+-Wczytuje plik do std::string
+-Dzieli tekst na fragmenty
+-Tworzy wątki (std::thread)
+-Wątki liczą lokalnie
+-Mutex chroni wspólne liczniki
+-join() czeka na zakończenie
+-Wypisanie wyników
+
+🔹 program.cpp – PROCESY
+
+-Mapuje plik do pamięci (mmap)
+-Tworzy pamięć współdzieloną (mmap)
+-Inicjalizuje mutex procesowy
+-Tworzy procesy (fork)
+-Procesy liczą swoje fragmenty
+-Mutex chroni pamięć współdzieloną
+-waitpid() czeka na procesy
+-Zwalnia pamięć i mutex
+
+4️⃣ RÓŻNICE W MUTEXACH
+
+Wątki
+std::mutex
+
+-działa tylko w jednym procesie
+-szybki
+-prosty w użyciu
+
+Procesy
+pthread_mutex_t
+
+-działa między procesami
+-musi być w pamięci współdzielonej
+-wymaga atrybutu PTHREAD_PROCESS_SHARED
+
+5️⃣ RÓŻNICE W PAMIĘCI
+
+Wątki
+
+-jedna przestrzeń adresowa
+-brak kopiowania danych
+-szybki dostęp
+
+Procesy
+
+-oddzielna pamięć
+-brak dostępu do zmiennych rodzica
+-konieczne mmap
+
+6️⃣ KIEDY CO STOSOWAĆ?
+
+Sytuacja	                     Wątki Procesy
+Szybkość	                       ✅	❌
+Bezpieczeństwo	                   ❌	✅
+Izolacja błędów	                   ❌	✅
+Współdzielenie danych	           ✅	❌
+Program systemowy	               ❌	✅
+
+
+Oba programy realizują to samo zadanie, jednak różnią się modelem współbieżności.
+watki.cpp wykorzystuje wątki, które współdzielą pamięć w obrębie jednego procesu, dlatego do synchronizacji wystarcza std::mutex.
+Natomiast program.cpp używa procesów tworzonych przez fork(), które mają oddzielne przestrzenie adresowe, więc do współdzielenia danych konieczne jest użycie pamięci współdzielonej za pomocą mmap oraz mutexa pthread_mutex_t.
