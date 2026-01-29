@@ -1,0 +1,3 @@
+Polecenia do uruchomienia tego pliku:
+
+python allocate.py
